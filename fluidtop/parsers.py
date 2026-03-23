@@ -1,5 +1,6 @@
 import math
 
+
 def parse_thermal_pressure(powermetrics_parse):
     return powermetrics_parse["thermal_pressure"]
 
@@ -26,25 +27,44 @@ def parse_cpu_metrics(powermetrics_parse):
             core = e_core if name[0] == 'E' else p_core
             core.append(cpu["cpu"])
             cpu_idle_ratio = cpu["idle_ratio"]
-            
+
             if math.isnan(cpu_idle_ratio):
                 cpu_idle_ratio = 0
             cpu_metric_dict[name + str(cpu["cpu"]) + "_active"] = int((1 - cpu_idle_ratio) * 100)
-            
+
     cpu_metric_dict["e_core"] = e_core
     cpu_metric_dict["p_core"] = p_core
     if "E-Cluster_active" not in cpu_metric_dict:
         # M1 Ultra
-        cpu_metric_dict["E-Cluster_active"] = int(
-            (cpu_metric_dict["E0-Cluster_active"] + cpu_metric_dict["E1-Cluster_active"])/2)
+        if (
+            "E0-Cluster_active" in cpu_metric_dict
+            and "E1-Cluster_active" in cpu_metric_dict
+        ):
+            cpu_metric_dict["E-Cluster_active"] = int(
+                (
+                    cpu_metric_dict["E0-Cluster_active"]
+                    + cpu_metric_dict["E1-Cluster_active"]
+                )
+                / 2
+            )
     if "P-Cluster_active" not in cpu_metric_dict:
         if "P2-Cluster_active" in cpu_metric_dict:
             # M1 Ultra
             cpu_metric_dict["P-Cluster_active"] = int((cpu_metric_dict["P0-Cluster_active"] + cpu_metric_dict["P1-Cluster_active"] +
                                                       cpu_metric_dict["P2-Cluster_active"] + cpu_metric_dict["P3-Cluster_active"]) / 4)
-        else:
+        elif (
+            "P0-Cluster_active" in cpu_metric_dict
+            and "P1-Cluster_active" in cpu_metric_dict
+        ):
             cpu_metric_dict["P-Cluster_active"] = int(
                 (cpu_metric_dict["P0-Cluster_active"] + cpu_metric_dict["P1-Cluster_active"])/2)
+    # Handle M5 Pro and other newer chips with M0/M1 cluster naming
+    if (
+        "M0-Cluster_active" in cpu_metric_dict
+        and "M1-Cluster_active" in cpu_metric_dict
+    ):
+        cpu_metric_dict["E-Cluster_active"] = int(
+            (cpu_metric_dict["M0-Cluster_active"] + cpu_metric_dict["M1-Cluster_active"]) / 2)
     # power
     cpu_metric_dict["ane_W"] = cpu_metrics["ane_energy"]/1000
     #cpu_metric_dict["dram_W"] = cpu_metrics["dram_energy"]/1000

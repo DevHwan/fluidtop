@@ -186,6 +186,9 @@ def get_soc_info():
     elif soc_info["name"] == "Apple M4 Pro":
         soc_info["cpu_max_power"] = 42
         soc_info["gpu_max_power"] = 23
+    elif soc_info["name"] == "Apple M5 Pro": # Estimated
+        soc_info["cpu_max_power"] = 45
+        soc_info["gpu_max_power"] = 25
     elif soc_info["name"] == "Apple M4 Max":
         soc_info["cpu_max_power"] = 68
         soc_info["gpu_max_power"] = 57
